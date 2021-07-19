@@ -23,7 +23,6 @@ func Load(db *gorm.DB) {
 	db.Debug().AutoMigrate(&models.Option{}, &models.Variant{}, &models.OrderLine{})
 	db.Debug().AutoMigrate(&models.OptionValue{}, &models.Image{})
 	db.Debug().AutoMigrate(&models.ProductOption{})
-
 	//---------------------------------------------------------------------------------------------//
 }
 

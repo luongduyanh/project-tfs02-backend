@@ -8,6 +8,9 @@ import (
 	"project-tfs02/api/models"
 	"project-tfs02/api/utils"
 	"project-tfs02/api/utils/format_error"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 func (server *Server) CreateOrder(w http.ResponseWriter, r *http.Request) {
@@ -35,8 +38,31 @@ func (server *Server) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	utils.JSON(w, http.StatusCreated, orderCreated)
 }
 
-func (server *Server) GetOrders(w http.ResponseWriter, r *http.Request) {}
+func (server *Server) GetOrders(w http.ResponseWriter, r *http.Request) {
+	order := models.Order{}
+
+	orders, err := order.FindAllOrders(server.DB)
+	if err != nil {
+		utils.ERROR(w, http.StatusInternalServerError, err)
+		return
+	}
+	utils.JSON(w, http.StatusOK, orders)
+}
 
 func (server *Server) GetOrdersByUserID(w http.ResponseWriter, r *http.Request) {}
 
-func (server *Server) GetOrderLinesByOrderID(w http.ResponseWriter, r *http.Request) {}
+func (server *Server) GetOrderLinesByOrderID(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	uid, err := strconv.ParseUint(vars["id"], 10, 64)
+	if err != nil {
+		utils.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	order := models.Order{}
+	ordertGotten, err := order.FindOrderLinesByOrderID(server.DB, uint(uid))
+	if err != nil {
+		utils.ERROR(w, http.StatusBadRequest, err)
+		return
+	}
+	utils.JSON(w, http.StatusOK, ordertGotten)
+}

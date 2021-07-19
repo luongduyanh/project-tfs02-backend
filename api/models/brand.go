@@ -42,22 +42,23 @@ func (b *Brand) SaveBrand(db *gorm.DB) (*Brand, error) {
 
 func (b *Brand) FindAllBrands(db *gorm.DB) (*[]Brand, error) {
 	//trả về tất cả các brand nhưng không gồm các product
-	// var err error
-	// brands := []Brand{}
-	// err = db.Debug().Model(&Brand{}).Limit(100).Find(&brands).Error
-	// if err != nil {
-	// 	return &[]Brand{}, err
-	// }
-
-	//trả về cả các product của từng brand
-	var listBrands []Brand
-	db.Debug().Model(&listBrands).Limit(100).Find(&listBrands)
-	for i, brand := range listBrands {
-		var listProducts []Product
-		db.Where("brand_id = ?", brand.ID).Find(&listProducts)
-		listBrands[i].Product = listProducts
+	var err error
+	brands := []Brand{}
+	err = db.Debug().Model(&Brand{}).Limit(100).Find(&brands).Error
+	if err != nil {
+		return &[]Brand{}, err
 	}
-	return &listBrands, nil
+	return &brands, nil
+
+	// //trả về cả các product của từng brand
+	// var listBrands []Brand
+	// db.Debug().Model(&listBrands).Limit(100).Find(&listBrands)
+	// for i, brand := range listBrands {
+	// 	var listProducts []Product
+	// 	db.Where("brand_id = ?", brand.ID).Find(&listProducts)
+	// 	listBrands[i].Product = listProducts
+	// }
+	// return &listBrands, nil
 }
 
 func (b *Brand) FindBrandByID(db *gorm.DB, pid uint) (*Brand, error) {
@@ -65,12 +66,12 @@ func (b *Brand) FindBrandByID(db *gorm.DB, pid uint) (*Brand, error) {
 	if err != nil {
 		return &Brand{}, err
 	}
-	//them []Product vao Brand
-	var product []Product
-	db.Debug().Where("brand_id = ?", pid).Find(&product)
-	for i := 0; i < len(product); i++ {
-		b.Product = append(b.Product, product[i])
-	}
+	// //them []Product vao Brand
+	// var product []Product
+	// db.Debug().Where("brand_id = ?", pid).Find(&product)
+	// for i := 0; i < len(product); i++ {
+	// 	b.Product = append(b.Product, product[i])
+	// }
 	return b, nil
 }
 

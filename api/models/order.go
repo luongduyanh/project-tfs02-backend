@@ -19,8 +19,8 @@ type OrderLine struct {
 	ProductName  string `gorm:"size:255;not null" json:"product_name"`
 	ProductPrice string `gorm:"size:255;not null" json:"product_price"`
 	Quantity     uint   `gorm:"not null" json:"quatity"`
+	TotalPrice   string `gorm:"" json:"total_price"`
 }
-
 
 func (o *Order) SaveOrder(db *gorm.DB) (*Order, error) {
 	var err = db.Debug().Model(&Order{}).Create(&o).Error
@@ -37,7 +37,6 @@ func (o *Order) FindAllOrders(db *gorm.DB) (*[]Order, error) {
 	if err != nil {
 		return &[]Order{}, err
 	}
-
 	return &orders, nil
 }
 
@@ -48,6 +47,15 @@ func (o *Order) FindOrderByID(db *gorm.DB, pid uint64) (*Order, error) {
 	}
 
 	return o, nil
+}
+
+func (o *Order) FindOrderLinesByOrderID(db *gorm.DB, pid uint) (*[]OrderLine, error) {
+	orderLines := []OrderLine{}
+	var err = db.Debug().Model(&OrderLine{}).Where("order_id = ?", pid).Find(&orderLines).Error
+	if err != nil {
+		return &orderLines, err
+	}
+	return &orderLines, nil
 }
 
 func (o *Order) UpdateAOrder(db *gorm.DB) (*Order, error) {

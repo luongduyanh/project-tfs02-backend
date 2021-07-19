@@ -13,7 +13,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
 func (server *Server) Login(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -56,6 +55,7 @@ func (server *Server) SignIn(email, password string) (string, error) {
 	if err != nil && err == bcrypt.ErrMismatchedHashAndPassword {
 		return "", err
 	}
+	//tao ra 1 token co chua user_id
 	return auth.CreateToken(uint32(user.ID))
 }
 
