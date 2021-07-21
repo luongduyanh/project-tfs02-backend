@@ -33,9 +33,6 @@ func (p *Product) Prepare() {
 	p.Desc = html.EscapeString(strings.TrimSpace(p.Desc))
 	p.ImageCover = html.EscapeString(strings.TrimSpace(p.ImageCover))
 	p.PriceCover = html.EscapeString(strings.TrimSpace(p.PriceCover))
-	p.BrandID = 0
-	p.SubCategoryID = 0
-
 	p.CreatedAt = time.Now()
 	p.UpdatedAt = time.Now()
 }

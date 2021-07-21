@@ -8,6 +8,8 @@ import (
 	"project-tfs02/api/controllers"
 	"project-tfs02/api/models"
 
+	rmq "project-tfs02/api/rabbitmq"
+
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
@@ -37,7 +39,7 @@ func Run() {
 	server.Initialize(os.Getenv("DB_DRIVER"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_PORT"), os.Getenv("DB_HOST"), os.Getenv("DB_NAME"))
 
 	// Load(server.DB)
-
 	server.Run(":8000")
+	rmq.RunRmq()
 
 }

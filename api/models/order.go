@@ -6,11 +6,12 @@ import (
 
 type Order struct {
 	gorm.Model
-	UserID     uint        `gorm:"" json:"user_id"`
-	StatusID   uint        `gorm:"not null;default:0" json:"status_id"`
-	TotalPrice string      `gorm:"" json:"total_price"`
-	OrderLine  []OrderLine `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:OrderID;" json:"order_line"`
-	Ship       Ship        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:OrderID;" json:"ship"`
+	UserID           uint        `gorm:"" json:"user_id"`
+	StatusID         uint        `gorm:"not null;default:0" json:"status_id"`
+	TotalPrice       string      `gorm:"" json:"total_price"`
+	OrderLine        []OrderLine `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:OrderID;" json:"order_line"`
+	Ship             Ship        `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:OrderID;" json:"ship"`
+	ComfirmEmailSent bool        `gorm:"default:false" json:"confirm_email_sent"`
 }
 
 type OrderLine struct {

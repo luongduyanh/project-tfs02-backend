@@ -14,9 +14,9 @@ import (
 
 type User struct {
 	gorm.Model
-	Name     string `gorm:"size:255;not null;unique" json:"name"`
+	Name     string `gorm:"size:255;not null;" json:"name"`
 	Email    string `gorm:"size:100;not null;unique" json:"email"`
-	Phone    string `gorm:"size:100;not null;unique" json:"phone"`
+	Phone    string `gorm:"size:100;not null;" json:"phone"`
 	Password string `gorm:"size:100;not null;" json:"password"`
 
 	Order []Order `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;foreignKey:UserID;" json:"order"`

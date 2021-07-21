@@ -41,6 +41,7 @@ func (server *Server) Login(w http.ResponseWriter, r *http.Request) {
 	utils.JSON(w, http.StatusOK, token)
 }
 
+
 func (server *Server) SignIn(email, password string) (string, error) {
 
 	var err error
