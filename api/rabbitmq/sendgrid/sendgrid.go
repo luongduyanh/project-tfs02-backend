@@ -32,7 +32,7 @@ func (em *EmailContent) String() string {
 
 // EmailContent defines email content info
 type EmailContent struct {
-	ID               int64      `json:"id"`
+	ID               uint       `json:"id"`
 	Subject          string     `json:"subject"`
 	FromUser         *EmailUser `json:"from"`
 	ToUser           *EmailUser `json:"to"`

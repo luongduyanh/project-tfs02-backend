@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"project-tfs02/api/models"
 	sendgird "project-tfs02/api/rabbitmq/sendgrid"
 	"sync"
 	"time"
@@ -14,38 +15,9 @@ import (
 )
 
 const (
-	// DefaultThankyouSubject   = "Thank you for booking from bookinghotel@dkt.com, have a great stay"
-	// DefaultThankyouBodyPlain = "Thank you for booking from us. Here are your order details:"
-	// DefaultThankyouBodyHtml  = "<strong>Thank you for booking from us. Here are your order details:</strong>"
 	DefaultFromName  = "My Store Owner"
 	DefaultFromEmail = "support@mystore.com"
 )
-
-type Hotel struct {
-	ID          uint
-	Name        string  `gorm:"type:varchar(100);" json:"name,omitempty" `
-	Address     string  `gorm:"type:varchar(100);" json:"address,omitempty" `
-	Description string  `gorm:"type:varchar(100);" json:"description,omitempty" `
-	Image       string  `gorm:"type:varchar(100);" json:"image,omitempty" `
-	Longitude   string  `gorm:"type:varchar(100);" json:"longitude,omitempty" `
-	Latitude    string  `gorm:"type:varchar(100);" json:"latitude,omitempty" `
-	UserID      uint    `json:"userID,omitempty"`
-	AverageRate float64 `gorm:"default:0.0;" json:"averagerate,omitempty"`
-	NumberRate  float64 `gorm:"default:0;" json:"numberrate,omitempty"`
-}
-type User struct {
-	ID                 uint
-	FirstName          string `gorm:"type:varchar(100);" json:"firstName,omitempty"`
-	LastName           string `gorm:"type:varchar(100);" json:"lastName,omitempty"`
-	Address            string `gorm:"type:varchar(100);" json:"address,omitempty"`
-	DOB                string `json:"dob,omitempty"`
-	Phone              string `json:"phone,omitempty"`
-	Email              string `gorm:"type:varchar(100);unique;" json:"email,omitempty"`
-	CodeAuthentication string `gorm:"type:varchar(20);unique;" json:"codeAuthentication,omitempty"`
-	UserName           string `gorm:"type:varchar(100);unique;" json:"userName,omitempty"`
-	Password           string `gorm:"type:varchar(100); default: 123;" json:"password,omitempty"`
-	Active             *bool  `gorm:"default: false;" json:"active,omitempty"`
-}
 
 // var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
@@ -158,7 +130,6 @@ func (c *SimpleProducer) Close() error {
 	return c.channel.Close()
 }
 
-
 // getEmailForSending get email and fill up enough information ready for sending
 func (p *SimpleProducer) getEmailForSending() ([]*sendgird.EmailContent, error) {
 	resp, err := p.scanFromDB()
@@ -183,7 +154,7 @@ func (p *SimpleProducer) scanFromDB() ([]*sendgird.EmailContent, error) {
 	// fromTime := time.Now().Add(-time.Minute * 2) // subtract by 2 minutes - why not one?
 	// What is prepared statement? Why we should know and use that? is the below usage right? Why not?
 	// stmt, err := p.db.Prepare("SELECT id, customer_name, email FROM `order` WHERE created_at >= ? AND thankyou_email_sent = ?;")
-	stmt, err := p.db.Prepare("SELECT * FROM `orders` WHERE confirm_email_sent = ?;")
+	stmt, err := p.db.Prepare("SELECT id,user_id,status_id,total_price FROM `orders` WHERE confirm_email_sent = ?;")
 	if err != nil {
 		fmt.Println("Cannot prepare statement, ", err)
 		return nil, err
@@ -197,50 +168,40 @@ func (p *SimpleProducer) scanFromDB() ([]*sendgird.EmailContent, error) {
 	// MUST to call this function at the end to free connection to mysql
 	defer rows.Close()
 
-	var id int64
-	var user_id, hotel_id, room_id, time_id, total uint
+	var id, user_id, status_id uint
+	var total_price string
 	for rows.Next() {
 		// err = rows.Scan(&id, &name, &email)
-		err = rows.Scan(&id, &user_id, &hotel_id, &room_id, &time_id, &total)
+		err = rows.Scan(&id, &user_id, &status_id, &total_price)
 		if err != nil {
 			fmt.Println("Cannot scan row due to error: ", err)
 			continue
 		}
-		var hotel Hotel
-		err = p.db.QueryRow("SELECT id, name, user_id FROM hotels where id = ?", hotel_id).Scan(&hotel.ID, &hotel.Name, &hotel.UserID)
+		// var hotel Hotel
+		// err = p.db.QueryRow("SELECT id, name, user_id FROM hotels where id = ?", hotel_id).Scan(&hotel.ID, &hotel.Name, &hotel.UserID)
+		// if err != nil {
+		// 	panic(err.Error()) // proper error handling instead of panic in your app
+		// }
+		var user models.User
+
+		err = p.db.QueryRow("SELECT id, name, email FROM users where id = ?", user_id).Scan(&user.ID, &user.Name, &user.Email)
 		if err != nil {
 			panic(err.Error()) // proper error handling instead of panic in your app
 		}
-		var Hotelier User
-		var user User
-		err = p.db.QueryRow("SELECT id, first_name, last_name, email FROM users where id = ?", hotel.UserID).Scan(&Hotelier.ID, &Hotelier.FirstName, &Hotelier.LastName, &Hotelier.Email)
-		if err != nil {
-			panic(err.Error()) // proper error handling instead of panic in your app
-		}
-		err = p.db.QueryRow("SELECT id, first_name, last_name, email FROM users where id = ?", user_id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email)
-		if err != nil {
-			panic(err.Error()) // proper error handling instead of panic in your app
-		}
+		// err = p.db.QueryRow("SELECT id, first_name, last_name, email FROM users where id = ?", user_id).Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email)
+		// if err != nil {
+		// 	panic(err.Error()) // proper error handling instead of panic in your app
+		// }
 		// fmt.Println(Hotelier.Email, user.Email)
 		// fmt.Println(id, user_id, hotel_id, room_id, time_id, total)
 		resp = append(resp, &sendgird.EmailContent{
 			ID:               id,
-			Subject:          "Hi " + user.FirstName + user.LastName + ", thank you for booking from bookinghotel@dkt.com, have a great stay",
-			PlainTextContent: "Hi " + user.FirstName + user.LastName + ", Thank you for booking from us",
+			Subject:          "Hi " + user.Name + ", thank you for purchase at shopbase.com",
+			PlainTextContent: "Hi " + user.Name + ", Thank you for booking from us",
 			HtmlContent:      "<strong>Here are your order details:</strong>",
 			ToUser: &sendgird.EmailUser{
-				Name:  user.FirstName + " " + user.LastName,
+				Name:  user.Name,
 				Email: user.Email,
-			},
-		})
-		resp = append(resp, &sendgird.EmailContent{
-			ID:               id,
-			Subject:          "Hi " + Hotelier.FirstName + Hotelier.LastName + "You have a new booking from " + user.FirstName + user.LastName,
-			PlainTextContent: "Hi " + Hotelier.FirstName + Hotelier.LastName + "You have a room set from " + user.FirstName + user.LastName,
-			HtmlContent:      "<strong>Here are order details:</strong>",
-			ToUser: &sendgird.EmailUser{
-				Name:  Hotelier.FirstName + " " + user.LastName,
-				Email: Hotelier.Email,
 			},
 		})
 	}
