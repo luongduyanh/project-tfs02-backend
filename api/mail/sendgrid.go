@@ -1,4 +1,4 @@
-package sendgird
+package mail
 
 import (
 	"encoding/json"
@@ -25,19 +25,19 @@ func (eu *EmailUser) String() string {
 	return string(b)
 }
 
-func (em *EmailContent) String() string {
-	b, _ := json.Marshal(em)
-	return string(b)
-}
-
 // EmailContent defines email content info
 type EmailContent struct {
-	ID               uint       `json:"id"`
+	ID               int64      `json:"id"`
 	Subject          string     `json:"subject"`
 	FromUser         *EmailUser `json:"from"`
 	ToUser           *EmailUser `json:"to"`
 	PlainTextContent string     `json:"plaintext_content"`
 	HtmlContent      string     `json:"html_content"`
+}
+
+func (em *EmailContent) String() string {
+	b, _ := json.Marshal(em)
+	return string(b)
 }
 
 // Validate will check whether the email content is valid
@@ -46,6 +46,13 @@ func (em *EmailContent) Validate() error {
 		return errors.New("wrong content")
 	}
 	return nil
+}
+
+
+// Sendgrid implements logic to send email to destination email address via sendgrid
+type Sendgrid struct {
+	ApiKey string `json:"api_key"`
+	Client *sendgrid.Client
 }
 
 // NewSendgrid creates new Sendgrid client
@@ -57,18 +64,12 @@ func NewSendgrid(apiKey string) *Sendgrid {
 	}
 }
 
-// Sendgrid implements logic to send email to destination email address via sendgrid
-type Sendgrid struct {
-	ApiKey string `json:"api_key"`
-	Client *sendgrid.Client
-}
-
 // Send will send email based on email content
 func (m *Sendgrid) Send(em *EmailContent) error {
 	if err := em.Validate(); err != nil {
 		return err
 	}
-	//TODO Un-comment that
+
 	from := mail.NewEmail(em.FromUser.Name, em.FromUser.Email)
 	subject := em.Subject
 	to := mail.NewEmail(em.ToUser.Name, em.ToUser.Email)

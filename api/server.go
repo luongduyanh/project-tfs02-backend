@@ -7,9 +7,6 @@ import (
 
 	"project-tfs02/api/controllers"
 	"project-tfs02/api/models"
-
-	rmq "project-tfs02/api/rabbitmq"
-
 	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
@@ -40,6 +37,5 @@ func Run() {
 
 	// Load(server.DB)
 	server.Run(":8000")
-	rmq.RunRmq()
 
 }

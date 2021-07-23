@@ -1,0 +1,123 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"time"
+
+	"rmq/dataHandling"
+	"rmq/fileHandling"
+	"rmq/rabbitmq"
+	// "rmq/producer"
+	// "rmq/consumer"
+)
+
+func main() {
+	//uri = "amqp://acc:password@URL"
+	// uri := "amqp://aa:aa@http://127.0.0.1:15672/#/"
+	uri := "amqp://tfs:tfs-ocg@174.138.40.239:5672/#/"
+
+	// creates rmq connection
+	rmq := rabbitmq.CreateNewRMQ(uri)
+
+	// config exchange
+	exchangeName1 := "ngocExc1"
+	exchangeName2 := "ngocExc2"
+	// exchangeType := "direct" // "derect" or "fanout" or "topic" or "headers"
+
+	// config queue
+	queueName1 := "ngocQueue1"
+	queueName2 := "ngocQueue2"
+
+	//config bindingKey between queue and exchange
+	// bindingKey := "abc"
+
+	//config routingKey for messages
+	// routingKey := "abc" // với các Direct Exchange thì routingKey của msg trùng
+	// với bindingKey của Exchange đó với Queue nào thì msg
+	// sẽ được chuyển đến Queue đó.
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	wg := sync.WaitGroup{}
+	// create 1 channel for producer
+	// pCh, err := rmq.GetChannel()
+	// if err != nil {
+	// 	fmt.Println("Cannot get channel: ", err)
+	// 	return
+	// }
+	// // create 1 channel for consumer
+	// cCh, err := rmq.GetChannel()
+	// if err != nil {
+	// 	fmt.Println("Cannot get channel: ", err)
+	// 	return
+	// }
+
+	//create a Producer
+	//Các msg được gửi lên bởi Producer này sẽ được gán routingKey là routingKey của Producer này
+	// và được gửi vào exchange đã khai báo của Producer này
+	// producer := producer.CreateNewProducer(exchangeName, exchangeType, routingKey, pCh, ctx, &wg)
+
+	//create a Consumer
+	//Các msg sẽ được lấy về từ queue trong khia báo, queue này đã được binding với exchange có tên trong khai báo
+	// consumer := consumer.CreateNewConsumer(exchangeName, exchangeType, bindingKey, queueName, cCh, ctx, &wg)
+
+	producer1, consumer1, err1 := rmq.QuickCreateNewPairProducerAndConsumer(exchangeName1, queueName1, ctx, &wg)
+	producer2, consumer2, err2 := rmq.QuickCreateNewPairProducerAndConsumer(exchangeName2, queueName2, ctx, &wg)
+
+	if err1 != nil || err2 != nil {
+		fmt.Println("Cannot create new pair croducer and consumer")
+		return
+	}
+
+	/////////////////////////////////////////////////
+	// graceful shutdown
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		sig := <-c // waits for the termination signal
+		fmt.Printf("Got %s signal. Exiting...\n", sig)
+		producer1.Close() // stop scheduler at the end
+		consumer1.Close()
+		producer2.Close() // stop scheduler at the end
+		consumer2.Close()
+		cancelFunc()
+	}()
+	/////////////////////////////////////////////////
+
+	wg.Add(4)
+
+	//read file and send1
+	var lineSend1 = make(chan string)
+	go fileHandling.ReadFileLineByLine("./test.txt", lineSend1)
+	go producer1.Send(lineSend1)
+
+	//receive1, handle1 and send2
+	var lineReceive1 = make(chan string)
+	var mapStringSend2 = make(chan string)
+	go consumer1.StartReceiveData(lineReceive1)
+	go dataHandling.SplitLineToMap(lineReceive1, mapStringSend2)
+	go producer2.Send(mapStringSend2)
+
+	//receive2, handle2 and print
+	var ResultMap = make(map[string]int)
+	var mapReceiveString = make(chan string)
+	go consumer2.StartReceiveData(mapReceiveString)
+	go dataHandling.UpdateMapResult(&ResultMap, mapReceiveString)
+	go func() {
+		for {
+			fmt.Printf("ResultMap: %v \n", ResultMap)
+			time.Sleep(time.Second * 5)
+		}
+	}()
+
+	//stop
+	time.Sleep(time.Second * 20)
+	fmt.Println("calling cancelFunc")
+	cancelFunc()
+
+	wg.Wait()
+
+}
