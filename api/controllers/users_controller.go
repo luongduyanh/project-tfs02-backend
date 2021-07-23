@@ -10,6 +10,8 @@ import (
 
 	"project-tfs02/api/auth"
 	"project-tfs02/api/models"
+	"project-tfs02/api/rabbitMQ/producer"
+	"project-tfs02/api/rabbitMQ/rabbitmq"
 	"project-tfs02/api/utils"
 	"project-tfs02/api/utils/format_error"
 
@@ -45,6 +47,20 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, userCreated.ID))
 	utils.JSON(w, http.StatusCreated, userCreated)
+
+	// Push email to rabbitMQ
+	rmq := rabbitmq.CreateNewRMQ("amqp://tfs:tfs-ocg@174.138.40.239:5672/#/")
+
+	//
+	pCh, err := rmq.GetChannel()
+	if err != nil {
+		fmt.Println("Cannot get channel")
+		return
+	}
+	producer := producer.CreateNewProducer("emailRegister", "direct", "abc", pCh)
+
+	producer.Send(user.Email)
+	producer.Close()
 }
 
 func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
