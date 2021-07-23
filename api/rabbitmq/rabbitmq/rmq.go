@@ -30,27 +30,3 @@ func CreateNewRMQ(uri string) *RMQ {
 		con,
 	}
 }
-
-// func (rmq *RMQ) QuickCreateNewPairProducerAndConsumer(exchangeName, queueName string, ctx context.Context, wg *sync.WaitGroup) (*producer.Producer, *consumer.Consumer, error) {
-// 	//trick configuration :v
-// 	routingKey := "abc"
-// 	bindingKey := routingKey
-// 	exchangeType := "direct"
-
-// 	// create 1 channel for producer
-// 	pCh, err := rmq.GetChannel()
-// 	if err != nil {
-// 		fmt.Println("Cannot get channel: ", err)
-// 		return &producer.Producer{}, &consumer.Consumer{}, err
-// 	}
-// 	// create 1 channel for consumer
-// 	cCh, err := rmq.GetChannel()
-// 	if err != nil {
-// 		fmt.Println("Cannot get channel: ", err)
-// 		return &producer.Producer{}, &consumer.Consumer{}, err
-// 	}
-
-// 	return producer.CreateNewProducer(exchangeName, exchangeType, routingKey, pCh, ctx, wg),
-// 		consumer.CreateNewConsumer(exchangeName, exchangeType, bindingKey, queueName, cCh, ctx, wg),
-// 		nil
-// }
