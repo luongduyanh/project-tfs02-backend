@@ -26,7 +26,7 @@ func RunRmq() {
 	routingKey := ""
 
 	// prepare db
-	db, err := sql.Open("mysql", "root:@tcp(127.0.0.1:3306)/project-tfs02") //TODO Change that!
+	db, err := sql.Open("mysql", "root:123456@tcp(127.0.0.1:3306)/project-tfs02") //TODO Change that!
 	if err != nil {
 		panic(err)
 	}

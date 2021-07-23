@@ -35,7 +35,6 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	userCreated, err := user.SaveUser(server.DB)
-
 	if err != nil {
 
 		formattedError := format_error.FormatError(err.Error())
@@ -45,6 +44,7 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, userCreated.ID))
 	utils.JSON(w, http.StatusCreated, userCreated)
+
 }
 
 func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {

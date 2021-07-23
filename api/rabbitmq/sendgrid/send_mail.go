@@ -9,7 +9,7 @@ var Sender = EmailUser{
 	Email: "luongduyanh1999@gmail.com",
 }
 
-func SendCodeVerify(receiverName, receiverEmail string) {
+func SendVerify(receiverName, receiverEmail string) {
 	var receiver = EmailUser{
 		Name:  receiverName,
 		Email: receiverEmail,
