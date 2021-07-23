@@ -11,7 +11,7 @@ import (
 type Consumer struct {
 	exchange     string
 	exchangeType string
-	bindingKey   string
+	bindingKey    string
 	queue        string
 	channel      *amqp.Channel
 	ctx          context.Context

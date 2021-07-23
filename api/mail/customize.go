@@ -76,7 +76,6 @@ func SendNoticeRegisterSuccessful(user_name, user_email string) {
 		Name:  user_name,
 		Email: user_email,
 	}
-
 	var emailContent = EmailContent{
 		ID:               0,
 		Subject:          "Import Successfully",
