@@ -1,9 +1,7 @@
 package consumer
 
 import (
-	"context"
 	"fmt"
-	"sync"
 
 	"github.com/streadway/amqp"
 )
@@ -14,20 +12,15 @@ type Consumer struct {
 	bindingKey    string
 	queue        string
 	channel      *amqp.Channel
-	ctx          context.Context
-	wg           *sync.WaitGroup
 }
 
-func CreateNewConsumer(exchange, exchangeType, bindingKey, queue string, channel *amqp.Channel, ctx context.Context,
-	wg *sync.WaitGroup) *Consumer {
+func CreateNewConsumer(exchange, exchangeType, bindingKey, queue string, channel *amqp.Channel) *Consumer {
 	return &Consumer{
 		exchange:     exchange,
 		exchangeType: exchangeType,
 		bindingKey:   bindingKey,
 		queue:        queue,
 		channel:      channel,
-		ctx:          ctx,
-		wg:           wg,
 	}
 }
 func (c *Consumer) StartReceiveData(output chan string) {
@@ -37,16 +30,9 @@ func (c *Consumer) StartReceiveData(output chan string) {
 	// consuming data
 	msgs := c.consum()
 	for {
-		select {
-		case data := <-msgs:
-			fmt.Printf("Receive from %v : %v \n", c.queue, string(data.Body))
-			output <- string(data.Body)
-			// time.Sleep(time.Second * 10)
-		case <-c.ctx.Done():
-			fmt.Printf("Exiting consumer from queue: %v \n", c.queue)
-			c.wg.Done()
-			return
-		}
+		data := <-msgs
+		fmt.Printf("Receive from %v : %v \n", c.queue, string(data.Body))
+		output <- string(data.Body)
 	}
 }
 
