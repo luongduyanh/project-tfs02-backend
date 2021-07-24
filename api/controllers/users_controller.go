@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"project-tfs02/api/auth"
-	"project-tfs02/api/mail"
 	"project-tfs02/api/models"
 	"project-tfs02/api/rabbitmq/producer"
 	rabbitmq "project-tfs02/api/rabbitmq/rabbitmq"
@@ -59,9 +58,7 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 	producer := producer.CreateNewProducer("emailRegister", "direct", "abc", pCh)
 	producer.Send(user.Email)
-	mail.SendNoticeRegisterSuccessful(userCreated.Name, userCreated.Email)
 	producer.Close()
-
 }
 
 func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
