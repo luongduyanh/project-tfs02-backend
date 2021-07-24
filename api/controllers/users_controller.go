@@ -19,23 +19,31 @@ import (
 )
 
 func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
-
+	// Đọc request
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		utils.ERROR(w, http.StatusUnprocessableEntity, err)
 	}
+
+	// Khởi tạo user
 	user := models.User{}
 	err = json.Unmarshal(body, &user)
 	if err != nil {
 		utils.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
+
+	// Chuẩn hóa user: xóa bỏ khoảng trắng, encode các kí tự đặc biệt
 	user.Prepare()
+
+	// Validate đã có ở Front-end, có thể bổ sung hoặc thay đổi vị trí validate trong tương lai
 	err = user.Validate("")
 	if err != nil {
 		utils.ERROR(w, http.StatusUnprocessableEntity, err)
 		return
 	}
+
+	// Lưu user mới vào database
 	userCreated, err := user.SaveUser(server.DB)
 
 	if err != nil {
@@ -45,21 +53,29 @@ func (server *Server) CreateUser(w http.ResponseWriter, r *http.Request) {
 		utils.ERROR(w, http.StatusInternalServerError, formattedError)
 		return
 	}
+
+	// Chỉnh sửa Header (có thể có hoặc không)
 	w.Header().Set("Location", fmt.Sprintf("%s%s/%d", r.Host, r.RequestURI, userCreated.ID))
+
+	// Trả về response
 	utils.JSON(w, http.StatusCreated, userCreated)
 
-	// Push email to rabbitMQ
+	// Khởi tạo rabbitMQ
 	rmq := rabbitmq.CreateNewRMQ("amqp://tfs:tfs-ocg@174.138.40.239:5672/#/")
 
-	//
+	// Khởi tạo Channel
 	pCh, err := rmq.GetChannel()
 	if err != nil {
 		fmt.Println("Cannot get channel")
 		return
 	}
+
+	// Khởi tạo producer
 	producer := producer.CreateNewProducer("emailRegister", "direct", "abc", pCh)
 
+	// Gửi email lên rabbitMQ
 	producer.Send(user.Email)
+	// mail.SendNoticeImportSuccessful(userCreated.Name, userCreated.Email)
 	producer.Close()
 }
 
@@ -76,15 +92,14 @@ func (server *Server) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) GetUser(w http.ResponseWriter, r *http.Request) {
-
 	vars := mux.Vars(r)
-	uid, err := strconv.ParseUint(vars["id"], 10, 32)
+	email := vars["email"]
 	if err != nil {
 		utils.ERROR(w, http.StatusBadRequest, err)
 		return
 	}
 	user := models.User{}
-	userGotten, err := user.FindUserByID(server.DB, uint32(uid))
+	userGotten, err := user.FindUserByEmail(server.DB, email)
 	if err != nil {
 		utils.ERROR(w, http.StatusBadRequest, err)
 		return

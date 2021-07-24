@@ -8,16 +8,16 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/", middlewares.SetMiddlewareJSON(s.Home)).Methods("GET")
 
 	// Login Route
-	s.Router.HandleFunc("/login", middlewares.SetMiddlewareJSON(s.Login)).Methods("POST")
+	s.Router.HandleFunc("/api/auth/login", middlewares.SetMiddlewareJSON(s.Login)).Methods("POST")
 
 	//Search Route
 	//tim kiem product theo product name
-	s.Router.HandleFunc("/api/products/search/{name}", middlewares.SetMiddlewareJSON(s.SearchProductsByName)).Methods("GET")
+	s.Router.HandleFunc("/api/products/search/{name}", s.SearchProductsByName).Methods("GET")
 
 	//Users routes
 	s.Router.HandleFunc("/api/users", middlewares.SetMiddlewareJSON(s.CreateUser)).Methods("POST")
 	s.Router.HandleFunc("/api/users", middlewares.SetMiddlewareJSON(s.GetUsers)).Methods("GET")
-	s.Router.HandleFunc("/api/users/{id}", middlewares.SetMiddlewareJSON(s.GetUser)).Methods("GET")
+	s.Router.HandleFunc("/api/users/{email}", middlewares.SetMiddlewareJSON(s.GetUser)).Methods("GET")
 	s.Router.HandleFunc("/api/users/{id}", middlewares.SetMiddlewareJSON(middlewares.SetMiddlewareAuthentication(s.UpdateUser))).Methods("PUT")
 	s.Router.HandleFunc("/api/users/{id}", middlewares.SetMiddlewareAuthentication(s.DeleteUser)).Methods("DELETE")
 
@@ -30,7 +30,7 @@ func (s *Server) initializeRoutes() {
 	s.Router.HandleFunc("/api/orders/", middlewares.SetMiddlewareJSON((s.GetOrdersByUserID))).Methods("GET")
 	//tat ca orderlines trong 1 order
 	s.Router.HandleFunc("/api/orders/{id}/order-lines", middlewares.SetMiddlewareJSON((s.GetOrderLinesByOrderID))).Methods("GET")
-	
+
 	//Posts routes
 	s.Router.HandleFunc("/api/posts", middlewares.SetMiddlewareJSON(s.CreatePost)).Methods("POST")
 	s.Router.HandleFunc("/api/posts", middlewares.SetMiddlewareJSON(s.GetPosts)).Methods("GET")

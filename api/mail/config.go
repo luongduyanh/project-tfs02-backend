@@ -1,8 +1,6 @@
 package mail
 
 var Sender = EmailUser{
-	// Name:  "OCG Opencommerce",
-	// Email: "nguyenngochdpv3@gmail.com",
 	Name:  "OCG Opencommerce",
 	Email: "luongduyanh1999@gmail.com",
 }
